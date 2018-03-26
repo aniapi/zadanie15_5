@@ -16,30 +16,34 @@ App = React.createClass({
 	    this.setState({
 	      loading: true  // 2. zaczyna ładowanie
 	    });
-	    this.getGif(searchingText, function(gif) {  // 3. rozpoczyna pobieranie gifa
+	    this.getGif(searchingText).then(gif => {
 	      this.setState({  // 4 
 	        loading: false,  // a koniec ładowania
 	        gif: gif,  // b nowy gif
 	        searchingText: searchingText  // c nowy stan dla wyszukiwanego tekstu
 	      });
-	    }.bind(this));
+	    });  // 3. rozpoczyna pobieranie gifa
 	},
 
-	getGif: function(searchingText, callback) {  // 1. test + funkca po pobraniu gifa
-	    var url = GIPHY_API_URL + '/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;  // 2. konstruujemy URL
-	    var xhr = new XMLHttpRequest();  // 3. zapytanie do serwera
-	    xhr.open('GET', url);
-	    xhr.onload = function() {
-	        if (xhr.status === 200) {
-	           var data = JSON.parse(xhr.responseText).data; // 4. rozpakowujemy obiekt z danymi
-	            var gif = {  // 5. układamy obiekt gif
-	                url: data.fixed_width_downsampled_url,
-	                sourceUrl: data.url
-	            };
-	            callback(gif);  // 6. przekazujemy obiekt do callback
-	        }
-	    };
-	    xhr.send();
+	getGif: function(searchingText) {  // 1. test + funkca po pobraniu gifa
+		return new Promise((resolve, reject) => {
+			var url = GIPHY_API_URL + '/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;  // 2. konstruujemy URL
+		    var xhr = new XMLHttpRequest();  // 3. zapytanie do serwera
+		    xhr.open('GET', url);
+		    xhr.onload = function() {
+		        if (xhr.status === 200) {
+		           var data = JSON.parse(xhr.responseText).data; // 4. rozpakowujemy obiekt z danymi
+		           var gif = {  // 5. układamy obiekt gif
+		                url: data.fixed_width_downsampled_url,
+		                sourceUrl: data.url
+		            };
+		            resolve(gif);  // 6. przekazujemy obiekt do callback
+		        } else {
+		        	reject(new Error(xhr.statusText));
+		        }    
+	    	};
+	    	xhr.send();
+		});
 	},
 
     render: function() {
